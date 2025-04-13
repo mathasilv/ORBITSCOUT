@@ -65,8 +65,8 @@ void SatelliteTracker::drawPassPolar(int centerX, int centerY, int radius, const
 
     tft.drawString("N", centerX - 2, centerY - radius - 10);
     tft.drawString("S", centerX - 2, centerY + radius + 5);
-    tft.drawString("E", centerX + radius + 5, centerY - 3);
-    tft.drawString("W", centerX - radius - 10, centerY - 3);
+    tft.drawString("W", centerX + radius + 5, centerY - 3);
+    tft.drawString("E", centerX - radius - 10, centerY - 3);
 
     // 4) Desenha a trajetória do satélite
     int prevX = -1, prevY = -1;
@@ -103,7 +103,7 @@ void SatelliteTracker::drawCurrentSatMarker(int centerX, int centerY, int radius
 {
     // Converte (az, el) para coordenadas polares
     double r = (1.0 - (el / 90.0)) * radius;  
-    double thetaDeg = 90.0 - az;              
+    double thetaDeg = 90.0 +                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           az;              
     double thetaRad = thetaDeg * PI / 180.0;  
 
     int xPos = centerX + static_cast<int>(r * cos(thetaRad));

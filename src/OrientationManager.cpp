@@ -33,7 +33,7 @@ void OrientationManager::computePointer(int centerX, int centerY, int radius, in
     float heading = event.orientation.x;
     float pitch = event.orientation.z;
     
-    float adjustedHeading = heading - 90.0f;
+    float adjustedHeading = heading + 90.0f;
 
     float thetaRad = adjustedHeading * PI / 180.0f;
 
