@@ -1,217 +1,114 @@
 
+# OrbitScout: Standalone Satellite Tracker
 
-# OrbitScout
-
-**OrbitScout** é um sistema embarcado de rastreamento de satélites que dispensa a necessidade do usuário inserir manualmente sua localização ou data/hora. O sistema utiliza um módulo GPS para obter, em tempo real, a posição e o tempo atual, e um sensor inercial para auxiliar no tracking, permitindo que o usuário visualize a trajetória real do satélite conforme a orientação do dispositivo.
-
----
-
-## Sumário
-
-- [Visão Geral](#visão-geral)
-- [Principais Funcionalidades](#principais-funcionalidades)
-- [Arquitetura e Módulos](#arquitetura-e-módulos)
-  - [Configuração (Config.h)](#configuração-configh)
-  - [Monitoramento de Bateria (BatteryMonitor)](#monitoramento-de-bateria-batterymonitor)
-  - [GPS para Localização e Tempo Real (GPS.h)](#gps-para-localização-e-tempo-real-gpsh)
-  - [Interface e Menu (MenuManager)](#interface-e-menu-menumanager)
-  - [Barras de Progresso (ProgressBar)](#barras-de-progresso-progressbar)
-  - [Conexão Wi‑Fi (WiFiManager)](#conexão-wifi-wifimanager)
-  - [Rastreamento de Satélites (SatelliteTracker)](#rastreamento-de-satélites-satellitetracker)
-  - [Notificações (NotificationManager)](#notificações-notificationmanager)
-  - [Orientação e Tracking (OrientationManager)](#orientação-e-tracking-orientationmanager)
-  - [Gerenciamento de TLE (TleManager)](#gerenciamento-de-tle-tlemanager)
-- [Pinagens](#pinagens)
-- [Requisitos de Hardware e Dependências](#requisitos-de-hardware-e-dependências)
-- [Como Compilar e Carregar](#como-compilar-e-carregar)
-- [Licença](#licença)
-
----
 
 ## Visão Geral
 
-O OrbitScout foi desenvolvido para rastrear satélites de forma autônoma. Graças à integração com um módulo GPS, o sistema coleta automaticamente a localização e a hora atuais, dispensando a entrada manual. Além disso, o sensor inercial auxilia na exibição da trajetória real do satélite, ajustando o gráfico de rastreamento de acordo com a orientação do dispositivo.
+**OrbitScout** é um projeto open-source que transforma um microcontrolador ESP32 em uma estação de acompanhamento de satélites. Com uma interface gráfica em um display TFT, módulos de GPS, sensor de orientação e monitoramento de bateria, o OrbitScout permite prever passagens de satélites, visualizar trajetórias em tempo real e até receber notificações sonoras quando uma passagem se aproxima.
 
----
+## Funcionalidades
 
-## Principais Funcionalidades
+- **Rastreamento de Satélites em Tempo Real:** Utiliza o modelo SGP4 para calcular a posição dos satélites a partir dos dados TLE.
+- **Integração com GPS:** Obtém a localização exata do usuário para cálculos precisos das passagens dos satélites.
+- **Sensoriamento de Orientação:** Incorpora o sensor BNO055 para fornecer dados de orientação e permitir o rastreamento manual.
+- **Interface Gráfica Intuitiva:** Menus interativos com barras de progresso, notificações e visualizações dinâmicas no display TFT.
+- **Controle de Backlight:** Ajuste do brilho do display via botões físicos.
+- **Monitoramento de Bateria:** Leitura analógica que converte valores do ADC em tensão real e porcentagem de carga.
+- **Conectividade WiFi:** Configuração via portal cativo e download automático de dados TLE de várias fontes online.
+- **Atualização e Gerenciamento de TLEs:** Permite escolher entre diversas fontes (NOAA, Weather, Engineering, etc.) para manter os dados de órbita atualizados.
+- **Sistema de Notificações:** Alertas visuais e sonoros quando um satélite está prestes a passar.
 
-- **Localização e Hora Automáticas:**  
-  O GPS fornece, em tempo real, dados de latitude, longitude, altitude e hora, eliminando a necessidade de configuração manual.
+## Requisitos de Hardware
 
-- **Rastreamento de Satélites:**  
-  A partir dos TLEs (Two-Line Elements) obtidos via Wi‑Fi, o sistema utiliza cálculos orbitais (SGP4) para determinar a posição dos satélites e gerar previsões de passagens.
+- **Microcontrolador:** ESP32
+- **Display:** TFT compatível com a biblioteca
+- **GPS:** Módulo GPS (ex.: Neo-6M) para localização
+- **Sensor de Orientação:** Adafruit BNO055
+- **Circuito de Monitoramento de Bateria:** Divisor de tensão
+- **Buzzer:** Para alertas sonoros
+- **Botões Físicos:** Para navegação (BTN_NEXT, BTN_PREV, BTN_SELECT, BTN_BACK)
+- **Outros:** Fios, protoboard e componentes de suporte para montagem
 
-- **Visualização da Trajetória Real:**  
-  Os dados do sensor inercial permitem que o sistema exiba a trajetória real do satélite, ajustando o gráfico de tracking conforme a orientação do dispositivo.
+## Requisitos de Software
 
-- **Interface Gráfica Completa:**  
-  Exibe menus interativos, gráficos (barras de progresso para brilho, bateria e sinal Wi‑Fi), informações GNSS e dados dos TLEs.
+- **Plataforma:** Arduino IDE ou PlatformIO
+- **Bibliotecas Necessárias:**
+  - [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)
+  - [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlus)
+  - [Adafruit_BNO055](https://github.com/adafruit/Adafruit_BNO055)
+  - [TimeLib](https://github.com/PaulStoffregen/Time)
+  - [WiFiManager](https://github.com/tzapu/WiFiManager)
+  - [Sgp4](https://github.com/dnwrnr/Arduino-SGP4)
 
-- **Notificações e Alertas:**  
-  Permite configurar alertas sonoros para notificar quando um satélite estiver visível (elevação > 0).
+## Estrutura do Projeto
 
-- **Atualização Automática de TLEs via Celestrak:**  
-  O sistema utiliza a API da Celestrak para obter os TLEs mais atualizados, armazenando-os no SPIFFS.
+A organização do projeto é modular, com cada componente responsável por uma parte específica do funcionamento do OrbitScout:
 
-- **Conexão Wi‑Fi:**  
-  Conecta-se a uma rede Wi‑Fi para baixar os TLEs e atualizar os dados dos satélites, exibindo a qualidade do sinal (RSSI) na interface.
+```
+OrbitScout/
+├── src
+│   ├── main.cpp                 # Inicialização e loop principal
+│   ├── BacklightControl.cpp     # Controle do backlight via PWM
+│   ├── BatteryMonitor.cpp       # Leitura e cálculo da bateria
+│   ├── gps.cpp                  # Processamento dos dados do GPS
+│   ├── MenuManager.cpp          # Sistema de menu e interface de usuário
+│   ├── NotificationManager.cpp  # Gerenciamento de notificações e alertas
+│   ├── OrbitScoutWiFi.cpp       # Conectividade WiFi e download de TLEs
+│   ├── OrientationManager.cpp   # Integração com o sensor BNO055
+│   ├── ProgressBar.cpp          # Renderização de barras de progresso
+│   ├── SatelliteTracker.cpp     # Rastreamento de satélites com SGP4
+│   └── TleManager.cpp           # Atualização e gerenciamento dos dados TLE
+└── include
+    ├── Config.h                 # Configurações de pinos e constantes
+    ├── DisplayConstants.h       # Layout e dimensões do display
+    ├── BacklightControl.h       
+    ├── BatteryMonitor.h        
+    ├── MenuManager.h            
+    ├── NotificationManager.h    
+    ├── OrbitScoutWiFi.h         
+    ├── OrientationManager.h     
+    ├── ProgressBar.h            
+    ├── SatelliteTracker.h       
+    ├── TleManager.h             
+    └── TleSources.h             # Fontes de dados TLE
+```
 
----
+## Como Começar
 
-## Arquitetura e Módulos
+### 1. Clonando o Repositório
 
-### Configuração (Config.h)
+```bash
+git clone https://github.com/seuusuario/OrbitScout.git
+cd OrbitScout
+```
 
-Contém todas as definições de pinos e parâmetros essenciais para o funcionamento do sistema:
-- **Botões:** `BTN_NEXT`, `BTN_PREV`, `BTN_SELECT`, `BTN_BACK`
-- **Saídas:** Pino para backlight e para o buzzer.
-- **Entradas:** Pino de leitura da bateria.
-- **Comunicação:** Pinos I2C (SDA e SCL) e pinos para o módulo GPS (RX e TX).
+### 2. Configuração de Hardware
 
----
+- Monte o circuito conectando o ESP32 ao TFT, GPS, sensor BNO055, módulo de bateria, buzzer e botões, conforme as definições em `Config.h`.
 
-### Monitoramento de Bateria (BatteryMonitor)
+### 3. Instalação de Dependências
 
-- **Função:**  
-  Realiza a leitura da tensão da bateria através do ADC, converte para tensão real utilizando um divisor e calcula a porcentagem de carga.
+- Instale as bibliotecas necessárias através do Arduino Library Manager ou via PlatformIO conforme listado na seção de Software.
 
----
+### 4. Upload do Firmware
 
-### GPS para Localização e Tempo Real (GPS.h)
+- Abra o arquivo `main.cpp`.
+- Selecione a placa e a porta corretas.
+- Compile e faça o upload do firmware para o microcontrolador.
 
-- **Função:**  
-  Obtém automaticamente a localização (latitude, longitude, altitude) e a hora atual utilizando o módulo GPS. Em caso de dados inválidos, utiliza os valores salvos via SPIFFS como fallback.
+## Uso
 
----
-
-### Interface e Menu (MenuManager)
-
-- **Função:**  
-  Gerencia a interface gráfica no display TFT, permitindo a navegação por meio de botões e a execução de funções associadas aos itens do menu.
-
----
-
-### Barras de Progresso (ProgressBar)
-
-- **Função:**  
-  Desenha barras de progresso no display para indicar indicadores visuais, como brilho, carga da bateria e qualidade do sinal Wi‑Fi.
-
----
-
-### Conexão Wi‑Fi (WiFiManager)
-
-- **Função:**  
-  Gerencia a conexão do dispositivo à rede Wi‑Fi, essencial para o download dos TLEs. Também exibe graficamente a qualidade do sinal (RSSI) no display.
-
----
-
-### Rastreamento de Satélites (SatelliteTracker)
-
-- **Função:**  
-  Utiliza os TLEs para calcular a posição dos satélites via a biblioteca SGP4, gerar previsões de passagens (AOS/LOS) e exibir trajetórias num gráfico polar.
-
----
-
-### Notificações (NotificationManager)
-
-- **Função:**  
-  Permite ao usuário configurar notificações (alertas sonoros) para passagens de satélites. O sistema verifica periodicamente se o satélite está visível (elevação > 0) e aciona o alerta, se necessário.
-
----
-
-### Orientação e Tracking (OrientationManager)
-
-- **Função:**  
-  Utiliza o sensor inercial BNO55 para obter os ângulos de Euler e auxiliar na visualização da trajetória real do satélite. Com base nos dados de heading e pitch, calcula a posição de um ponteiro que indica a direção e o deslocamento relativo à posição central do gráfico.
-
----
-
-### Gerenciamento de TLE (TleManager)
-
-- **Função:**  
-  Baixa e atualiza os TLEs dos satélites a partir de fontes online, utilizando a API da Celestrak para garantir que os dados estejam sempre atualizados. Os TLEs são armazenados no SPIFFS para uso no rastreamento.
-
----
-
-## Pinagens
-
-Esta seção reúne os principais pinos utilizados no projeto (baseado em uma configuração para ESP32):
-
-- **Display TFT (ST7789):**
-  - **MOSI:** GPIO 23
-  - **SCLK:** GPIO 18
-  - **CS (Chip Select):** GPIO 5
-  - **DC (Data/Command):** GPIO 2
-  - **RST (Reset):** GPIO 4
-  - **BL (Backlight):** GPIO 15
-
-- **Módulo GPS:**
-  - **RX:** (definido em Config.h, conforme seu esquema – normalmente um pino disponível)
-  - **TX:** (definido em Config.h)
-
-- **Sensor Inercial:**
-  - Conectado via I2C:
-    - **SDA:** GPIO definido (consulte a seção de Configuração – por exemplo, GPIO 22)
-    - **SCL:** GPIO definido (por exemplo, GPIO 21)
-
-- **Bateria:**
-  - **Pino de leitura:** Definido em Config.h (ex.: GPIO 33)
-
-- **Botões de Navegação:**
-  - **BTN_NEXT, BTN_PREV, BTN_SELECT, BTN_BACK:** Definidos em Config.h
-
-- **Buzzer:**
-  - **Pino:** Definido em Config.h (ex.: GPIO 13)
-
-> **Nota:**  
-> As pinagens exatas podem ser ajustadas no arquivo `Config.h` conforme o hardware disponível. Verifique e adapte os números dos pinos de acordo com o seu projeto.
-
----
-
-## Requisitos de Hardware e Dependências
-
-### Hardware
-
-- **Microcontrolador:** Ex. ESP32 (o código utiliza bibliotecas como WiFi, SPIFFS e funções PWM).  
-- **Display TFT:** Compatível com a biblioteca TFT_eSPI e configurado para o driver ST7789.  
-- **Módulo GPS:** BN280 Responsável por fornecer localização e tempo em tempo real.  
-- **Sensor Inercial:** BNO055 para orientação e auxílio no tracking.  
-- **Bateria:** Monitorada via pino ADC (com divisor de tensão adequado).  
-- **Botões Físicos:** Quatro botões para navegação (NEXT, PREV, SELECT, BACK).  
-- **Buzzer:** Para alertas sonoros.
-
-### Dependências (Bibliotecas Arduino)
-
-- [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)
-- [WiFi](https://www.arduino.cc/reference/en/libraries/wifi/)
-- [SPIFFS](https://github.com/espressif/arduino-esp32/tree/master/libraries/SPIFFS)
-- [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlus)
-- [BNO055](https://github.com/adafruit/Adafruit_BNO055)
-- [Sgp4](https://github.com/ianmcgregor/Sgp4) (ou versão compatível)
-- [TimeLib](https://github.com/PaulStoffregen/Time)
-
----
-
-## Como Compilar e Carregar
-
-1. **Configuração do Ambiente:**  
-   - Utilize o Arduino IDE ou PlatformIO.  
-   - Se estiver usando um ESP32, selecione a placa correta e a porta serial apropriada.
-
-2. **Instale as Dependências:**  
-   - Instale todas as bibliotecas listadas na seção de dependências.
-
-3. **Carregamento do Firmware:**  
-   - Compile o projeto.  
-   - Carregue o firmware no dispositivo.
+- **Navegação:** Utilize os botões físicos para navegar pelos menus e ajustar configurações, como o brilho do display.
+- **Configuração WiFi:** Se não estiver conectado a uma rede, o OrbitScout iniciará um portal cativo para que você possa inserir as credenciais WiFi.
+- **Rastreamento de Satélites:** No menu principal, acesse as opções de rastreamento para visualizar a posição e trajetória dos satélites. Selecione um satélite e visualize suas passagens.
+- **Notificações:** Enquanto visualiza as passagens, pressione o botão SELECT na passagem desejada para configurar um alerta. Você será notificado automaticamente quando o satélite iniciar essa passagem.
+- **Monitoramento:** Confira o status da bateria e outros dados dinâmicos na interface do display.
 
 
----
+## Contribuição
+
+Contribuições são muito bem-vindas! Sinta-se livre para forkar o repositório, fazer melhorias e submeter pull requests. Se encontrar algum bug ou tiver sugestões, abra uma *issue* para discussão.
 
 ## Licença
 
-Este projeto é disponibilizado sob [especifique sua licença – ex.: MIT License].  
-Consulte o arquivo `LICENSE` para maiores detalhes.
-
----
+Este projeto é licenciado sob a [MIT License](LICENSE). Consulte o arquivo de licença para mais detalhes.
